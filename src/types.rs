@@ -1,48 +1,59 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Pitch {
     step: char,
     octave: u8,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Note {
-    pitch: Option<Pitch>, //Pitch(Step, octave, duration, type)
-    duration: u8, //Silence(duration, type)
-    typee: String,
+    pub pitch: Option<Pitch>, //Pitch(Step, octave, duration, type)
+    pub duration: u8, //Silence(duration, type)
+    pub typee: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Clef {
     sign: char,
 }
 
 #[derive(Debug)]
 pub struct Part {
-    measures: Vec<Mesure>,
+    pub measures: Vec<Mesure>,
 }
 
 #[derive(Debug)]
 pub struct ScorePartwise {
-    part: Part,
+    pub parts: Vec<Part>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Attributes {
-    divisions: u8, //unité de division de la noire le plus petit apparaissant dans la partition entière (1 pour une partition avec que des noires, 2 pour une contenant aussi des croches, etc)
+    pub divisions: u8, //unité de division de la noire le plus petit apparaissant dans la partition entière (1 pour une partition avec que des noires, 2 pour une contenant aussi des croches, etc)
     clef: Clef,    //Clé de la portée
     time: Time,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Time {
     beats: u8, //nombre du haut dans l'indication de mesure
     beat_type: u8, //nombre du bas dans l'indication de mesure
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Mesure {
-    attributes: Option<Attributes>,
-    notes: Vec<Note>, //Ensemble des notes et silences contenus dans la mesure
+    pub attributes: Option<Attributes>,
+    pub notes: Vec<Note>, //Ensemble des notes et silences contenus dans la mesure
+}
+
+pub enum Element {
+    pitch(Pitch), //Ajout, Retrait, Modif
+    note(Note), //ARM
+    clef(Clef), //M
+    // part(Part), //AR
+    // scorePartwise(ScorePartwise), //AR
+    attributes(Attributes), //M
+    time(Time), //M
+    mesure(Mesure), //ARM
 }
 
 impl Mesure {
@@ -57,8 +68,11 @@ impl Mesure {
 impl ScorePartwise {
     pub fn print_score(&self) -> () {
         println!("Score : {:?}", self);
-        for measure in self.part.measures.iter() {
-            measure.print_mesure();
+        for part in self.parts.iter() {
+            println!("Part : {:?}", part);
+            for measure in part.measures.iter() {
+                measure.print_mesure();
+            }
         }
     }
 }
