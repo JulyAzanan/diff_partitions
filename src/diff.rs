@@ -82,41 +82,116 @@ pub fn LCSMeasuresLength(src: &super::types::Part, dst: &super::types::Part) -> 
     return c;
 }
 
-pub fn compute_diff_notes(src: &super::types::Mesure, dst: &super::types::Mesure, lcs: Vec<Vec<u32>>, i: isize, j: isize) -> Vec<Diff> {
+pub fn compute_diff_notes(src: &super::types::Mesure, dst: &super::types::Mesure, lcs: Vec<Vec<u32>>, i: isize, j: isize, last_add: bool) -> Vec<Diff> {
     if i > 0 && j > 0 && (src.notes[(i-1) as usize].pitch == dst.notes[(j-1) as usize].pitch)
     && (src.notes[(i-1) as usize].typee == dst.notes[(j-1) as usize].typee) {
-        let mut res = compute_diff_notes(src, dst, lcs, i-1, j-1);
+        let mut res = compute_diff_notes(src, dst, lcs, i-1, j-1, false);
         res.push(Diff::Unmodified(super::types::Element::note(src.notes[(i-1) as usize].clone())));
         return res;
     }
-    else if j > 0 && (i == 0 || lcs[i as usize][(j-1) as usize] >= lcs[(i-1) as usize][j as usize]) {
-        let mut res = compute_diff_notes(src, dst, lcs, i, j-1);
-        let elem = res.pop();
-        match elem {
-            None => {
-                res.push(Diff::Added(super::types::Element::note(dst.notes[(j-1) as usize].clone())));
-            },
-            Some(e) => {
-                match e {
-                    Diff::Removed(m) => {
-                        res.push(Diff::Modified(super::types::Element::note(dst.notes[(j-1) as usize].clone()), Box::new(Vec::new())));
-                    },
-                    _ => {
-                        res.push(e);
-                        res.push(Diff::Added(super::types::Element::note(dst.notes[(j-1) as usize].clone())));
+    if !last_add {
+        if j > 0 && (i == 0 || lcs[i as usize][(j-1) as usize] >= lcs[(i-1) as usize][j as usize]) {
+            let mut res = compute_diff_notes(src, dst, lcs, i, j-1, true);
+            let elem = res.pop();
+            match elem {
+                None => {
+                    res.push(Diff::Added(super::types::Element::note(dst.notes[(j-1) as usize].clone())));
+                },
+                Some(e) => {
+                    match e {
+                        Diff::Removed(m) => {
+                            res.push(Diff::Modified(super::types::Element::note(dst.notes[(j-1) as usize].clone()), Box::new(Vec::new())));
+                        },
+                        _ => {
+                            res.push(e);
+                            res.push(Diff::Added(super::types::Element::note(dst.notes[(j-1) as usize].clone())));
+                        }
                     }
                 }
             }
+            return res;
         }
-        return res;
-    }
-    else if i > 0 && (j == 0 || lcs[i as usize][(j-1) as usize] < lcs[(i-1) as usize][j as usize]) {
-        let mut res = compute_diff_notes(src, dst, lcs, i-1, j);
-        res.push(Diff::Removed(super::types::Element::note(src.notes[(i-1) as usize].clone())));
-        return res;
+        else if i > 0 && (j == 0 || lcs[i as usize][(j-1) as usize] < lcs[(i-1) as usize][j as usize]) {
+            let mut res = compute_diff_notes(src, dst, lcs, i-1, j, false);
+            if j == 0 {
+                res.push(Diff::Removed(super::types::Element::note(src.notes[(i-1) as usize].clone())));
+            }
+            else {
+                let elem = res.pop();
+                match elem {
+                    None => {
+                        res.push(Diff::Removed(super::types::Element::note(src.notes[(i-1) as usize].clone())));
+                    }
+                    Some(e) => {
+                        match e {
+                            Diff::Added(m) => {
+                                res.push(Diff::Modified(super::types::Element::note(dst.notes[(j-1) as usize].clone()), Box::new(Vec::new())));
+                            }
+                            _ => {
+                                res.push(e);
+                                res.push(Diff::Removed(super::types::Element::note(src.notes[(i-1) as usize].clone())));
+                            }
+                        }
+                    }
+                }
+            }
+            return res;
+        }
+        else {
+            return Vec::new();
+        }
     }
     else {
-        return Vec::new();
+        if j > 0 && (i == 0 || lcs[i as usize][(j-1) as usize] > lcs[(i-1) as usize][j as usize]) {
+            let mut res = compute_diff_notes(src, dst, lcs, i, j-1, true);
+            let elem = res.pop();
+            match elem {
+                None => {
+                    res.push(Diff::Added(super::types::Element::note(dst.notes[(j-1) as usize].clone())));
+                },
+                Some(e) => {
+                    match e {
+                        Diff::Removed(m) => {
+                            res.push(Diff::Modified(super::types::Element::note(dst.notes[(j-1) as usize].clone()), Box::new(Vec::new())));
+                        },
+                        _ => {
+                            res.push(e);
+                            res.push(Diff::Added(super::types::Element::note(dst.notes[(j-1) as usize].clone())));
+                        }
+                    }
+                }
+            }
+            return res;
+        }
+        else if i > 0 && (j == 0 || lcs[i as usize][(j-1) as usize] <= lcs[(i-1) as usize][j as usize]) {
+            let mut res = compute_diff_notes(src, dst, lcs, i-1, j, false);
+            if j == 0 {
+                res.push(Diff::Removed(super::types::Element::note(src.notes[(i-1) as usize].clone())));
+            }
+            else {
+                let elem = res.pop();
+                match elem {
+                    None => {
+                        res.push(Diff::Removed(super::types::Element::note(src.notes[(i-1) as usize].clone())));
+                    }
+                    Some(e) => {
+                        match e {
+                            Diff::Added(m) => {
+                                res.push(Diff::Modified(super::types::Element::note(dst.notes[(j-1) as usize].clone()), Box::new(Vec::new())));
+                            }
+                            _ => {
+                                res.push(e);
+                                res.push(Diff::Removed(super::types::Element::note(src.notes[(i-1) as usize].clone())));
+                            }
+                        }
+                    }
+                }
+            }
+            return res;
+        }
+        else {
+            return Vec::new();
+        }  
     }
 }
 
@@ -157,7 +232,8 @@ pub fn compute_diff_part(src: &super::types::Part, dst: &super::types::Part, lcs
                                     &(dst.measures[(j-1) as usize]),
                                     lcs_notes, 
                                     i_notes, 
-                                    j_notes);
+                                    j_notes,
+                                    false);
                                 res.push(Diff::Modified(super::types::Element::mesure(src.measures[(i-1) as usize].clone()), Box::new(modified_notes)))
                             },
                             _ => {
@@ -192,7 +268,8 @@ pub fn compute_diff_part(src: &super::types::Part, dst: &super::types::Part, lcs
                                     &m, 
                                     lcs_notes, 
                                     i_notes, 
-                                    j_notes);
+                                    j_notes,
+                                    false);
                                 res.push(Diff::Modified(super::types::Element::mesure(src.measures[(i-1) as usize].clone()), Box::new(modified_notes)))
                             },
                             _ => {
@@ -232,7 +309,8 @@ pub fn compute_diff_part(src: &super::types::Part, dst: &super::types::Part, lcs
                                     &(dst.measures[(j-1) as usize]),
                                     lcs_notes, 
                                     i_notes, 
-                                    j_notes);
+                                    j_notes,
+                                    false);
                                 res.push(Diff::Modified(super::types::Element::mesure(src.measures[(i-1) as usize].clone()), Box::new(modified_notes)))
                             },
                             _ => {
@@ -267,7 +345,8 @@ pub fn compute_diff_part(src: &super::types::Part, dst: &super::types::Part, lcs
                                     &m, 
                                     lcs_notes, 
                                     i_notes, 
-                                    j_notes);
+                                    j_notes,
+                                    false);
                                 res.push(Diff::Modified(super::types::Element::mesure(src.measures[(i-1) as usize].clone()), Box::new(modified_notes)))
                             },
                             _ => {
@@ -339,7 +418,4 @@ pub fn diff(src: &super::types::ScorePartwise, dst: &super::types::ScorePartwise
     // print_diff(src, dst, lcs, i, j, false);
     println!("{:#?}", compute_diff_part(&(src.parts[0]), &(dst.parts[0]), lcs, i, j, false));
     return res;
-    
-
-    // TODO : le diff sur les notes est à peu près potable, mais peut être amélioré de la même manière que celui des mesures
 }
