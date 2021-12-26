@@ -172,7 +172,37 @@ pub fn compute_diff_part(src: &super::types::Part, dst: &super::types::Part, lcs
         }
         else if i > 0 && (j == 0 || lcs[i as usize][(j-1) as usize] < lcs[(i-1) as usize][j as usize]) {
             let mut res = compute_diff_part(src, dst, lcs, i-1, j, false);
-            res.push(Diff::Removed(super::types::Element::mesure(src.measures[(i-1) as usize].clone())));
+            if j == 0 {
+                res.push(Diff::Removed(super::types::Element::mesure(src.measures[(i-1) as usize].clone())));
+            }
+            else {
+                let elem = res.pop();
+                match elem {
+                    None => {
+                        res.push(Diff::Removed(super::types::Element::mesure(src.measures[(i-1) as usize].clone())));
+                    },
+                    Some(e) => {
+                        match e {
+                            Diff::Added(super::types::Element::mesure(m)) => {
+                                let lcs_notes = LCSNotesLength(&(src.measures[(i-1) as usize]), &m);
+                                let i_notes = (lcs_notes.len() as isize) - 1;
+                                let j_notes = (lcs_notes[0].len() as isize) - 1;
+                                let modified_notes = compute_diff_notes(
+                                    &(src.measures[(i-1) as usize]),
+                                    &m, 
+                                    lcs_notes, 
+                                    i_notes, 
+                                    j_notes);
+                                res.push(Diff::Modified(super::types::Element::mesure(src.measures[(i-1) as usize].clone()), Box::new(modified_notes)))
+                            },
+                            _ => {
+                                res.push(e);
+                                res.push(Diff::Removed(super::types::Element::mesure(src.measures[(i-1) as usize].clone())));
+                            }
+                        }
+                    }
+                }
+            }
             return res;
         }
         else {
@@ -217,7 +247,37 @@ pub fn compute_diff_part(src: &super::types::Part, dst: &super::types::Part, lcs
         }
         else if i > 0 && (j == 0 || lcs[i as usize][(j-1) as usize] <= lcs[(i-1) as usize][j as usize]) {
             let mut res = compute_diff_part(src, dst, lcs, i-1, j, false);
-            res.push(Diff::Removed(super::types::Element::mesure(src.measures[(i-1) as usize].clone())));
+            if j == 0 {
+                res.push(Diff::Removed(super::types::Element::mesure(src.measures[(i-1) as usize].clone())));
+            }
+            else {
+                let elem = res.pop();
+                match elem {
+                    None => {
+                        res.push(Diff::Removed(super::types::Element::mesure(src.measures[(i-1) as usize].clone())));
+                    },
+                    Some(e) => {
+                        match e {
+                            Diff::Added(super::types::Element::mesure(m)) => {
+                                let lcs_notes = LCSNotesLength(&(src.measures[(i-1) as usize]), &m);
+                                let i_notes = (lcs_notes.len() as isize) - 1;
+                                let j_notes = (lcs_notes[0].len() as isize) - 1;
+                                let modified_notes = compute_diff_notes(
+                                    &(src.measures[(i-1) as usize]),
+                                    &m, 
+                                    lcs_notes, 
+                                    i_notes, 
+                                    j_notes);
+                                res.push(Diff::Modified(super::types::Element::mesure(src.measures[(i-1) as usize].clone()), Box::new(modified_notes)))
+                            },
+                            _ => {
+                                res.push(e);
+                                res.push(Diff::Removed(super::types::Element::mesure(src.measures[(i-1) as usize].clone())));
+                            }
+                        }
+                    }
+                }
+            }
             return res;
         }
         else {
@@ -281,6 +341,5 @@ pub fn diff(src: &super::types::ScorePartwise, dst: &super::types::ScorePartwise
     return res;
     
 
-    // TODO : traiter le cas de quand on fait un retrait, voir si on n'a pas fait d'ajout juste avant ==> modification
-    // TODO : le diff sur les notes n'est pas bon, il faut le refaire
+    // TODO : le diff sur les notes est à peu près potable, mais peut être amélioré de la même manière que celui des mesures
 }
