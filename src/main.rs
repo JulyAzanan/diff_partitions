@@ -11,8 +11,8 @@ use xmltree::Element;
 use std::fs::File;
 
 fn main() {
-    let mut file = File::open("./tests/2Ajouts2eMesure_o.musicxml").unwrap();
-    let mut file2 = File::open("./tests/2Ajouts2eMesure_d.musicxml").unwrap();
+    let mut file = File::open("./tests/petit_exemple_o.musicxml").unwrap();
+    let mut file2 = File::open("./tests/petit_exemple_d3.musicxml").unwrap();
     /* let mut file = File::open("./tests/petit_exemple_o.musicxml").unwrap();
     let mut file2 = File::open("./tests/petit_exemple_d3.musicxml").unwrap(); */
     let mut s = String::new();

@@ -1,22 +1,22 @@
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Pitch {
     step: char,
     octave: u8,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Note {
     pub pitch: Option<Pitch>, //Pitch(Step, octave, duration, type)
     pub duration: u8, //Silence(duration, type)
     pub typee: String,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Clef {
     sign: char,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Part {
     pub measures: Vec<Mesure>,
 }
@@ -26,25 +26,26 @@ pub struct ScorePartwise {
     pub parts: Vec<Part>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Attributes {
     pub divisions: u8, //unité de division de la noire le plus petit apparaissant dans la partition entière (1 pour une partition avec que des noires, 2 pour une contenant aussi des croches, etc)
     clef: Clef,    //Clé de la portée
     time: Time,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Time {
     beats: u8, //nombre du haut dans l'indication de mesure
     beat_type: u8, //nombre du bas dans l'indication de mesure
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Mesure {
     pub attributes: Option<Attributes>,
     pub notes: Vec<Note>, //Ensemble des notes et silences contenus dans la mesure
 }
 
+#[derive(Debug)]
 pub enum Element {
     pitch(Pitch), //Ajout, Retrait, Modif
     note(Note), //ARM
