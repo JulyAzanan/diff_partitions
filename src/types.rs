@@ -50,7 +50,7 @@ pub enum Element {
     pitch(Pitch), //Ajout, Retrait, Modif
     note(Note), //ARM
     clef(Clef), //M
-    // part(Part), //AR
+    part(Part), //AR
     // scorePartwise(ScorePartwise), //AR
     attributes(Attributes), //M
     time(Time), //M

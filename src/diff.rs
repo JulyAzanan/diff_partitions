@@ -406,16 +406,24 @@ pub fn print_diff(src: &super::types::ScorePartwise, dst: &super::types::ScorePa
     }
 }
 
-pub fn diff(src: &super::types::ScorePartwise, dst: &super::types::ScorePartwise) -> Vec<super::types::Element> {
-    let res = Vec::new();
-    let lcs = LCSMeasuresLength(&src.parts[0], &dst.parts[0]);
-    let i : isize = (lcs.len() as isize) - 1;
-    let j : isize = (lcs[0].len() as isize) - 1;
+pub fn diff(src: &super::types::ScorePartwise, dst: &super::types::ScorePartwise) -> Vec<Vec<Diff>> {
+    let mut res = Vec::new();
+    for k in 0..std::cmp::max(src.parts.len(), dst.parts.len()) {
+        if k > src.parts.len() {
+            res.push(vec!(Diff::Added(super::types::Element::part(dst.parts[k].clone()))));
+        }
+        else {
+            let lcs = LCSMeasuresLength(&src.parts[k], &dst.parts[k]);
+            let i : isize = (lcs.len() as isize) - 1;
+            let j : isize = (lcs[0].len() as isize) - 1;
+            res.push(compute_diff_part(&(src.parts[k]), &(dst.parts[k]), lcs, i, j, false));
+        }
+    }
     // TODO : Calculer le diff sur chacune des parts (portées)
     // Montre les ajouts par un +, les unmodified par un rien, et les suppressions par un -
     // Pour les modifications, récup la mesure qui a été ajoutée et celle supprimée juste avant / après, et regarder dedans en profondeur
     // println!("{:#?}", lcs);
     // print_diff(src, dst, lcs, i, j, false);
-    println!("{:#?}", compute_diff_part(&(src.parts[0]), &(dst.parts[0]), lcs, i, j, false));
+    // println!("{:#?}", compute_diff_part(&(src.parts[0]), &(dst.parts[0]), lcs, i, j, false));
     return res;
 }
