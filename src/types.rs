@@ -2,6 +2,7 @@
 pub struct Pitch {
     pub step: char,
     pub octave: u8,
+    pub alter: Option<i8>
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -9,6 +10,9 @@ pub struct Note {
     pub pitch: Option<Pitch>, //Pitch(Step, octave, duration, type)
     pub duration: u8, //Silence(duration, type)
     pub typee: String,
+    pub voice: u8,
+    pub staff: Option<u8>,
+    pub dot: bool
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -29,8 +33,10 @@ pub struct ScorePartwise {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Attributes {
     pub divisions: u8, //unité de division de la noire le plus petit apparaissant dans la partition entière (1 pour une partition avec que des noires, 2 pour une contenant aussi des croches, etc)
-    pub clef: Clef,    //Clé de la portée
+    pub clef: Vec<Clef>,    //Clé de la portée
     pub time: Time,
+    pub staves: Option<u8>,
+    pub key: i8,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -47,14 +53,13 @@ pub struct Mesure {
 
 #[derive(Debug)]
 pub enum Element {
-    pitch(Pitch), //Ajout, Retrait, Modif
-    note(Note), //ARM
-    clef(Clef), //M
-    part(Part), //AR
-    // scorePartwise(ScorePartwise), //AR
-    attributes(Attributes), //M
-    time(Time), //M
-    mesure(Mesure), //ARM
+    pitch(Pitch), 
+    note(Note), 
+    clef(Clef),
+    part(Part),
+    attributes(Attributes), 
+    time(Time),
+    mesure(Mesure), 
 }
 
 impl Mesure {
@@ -90,7 +95,7 @@ pub fn parsed_to_part(parsed: &xmltree::Element) -> Part {
 pub fn parsed_to_measure(parsed: &xmltree::Element) -> Mesure {
     let mut res = Mesure {
         attributes: None,
-        notes: Vec::new()
+        notes: Vec::new(),
     };
     for child in parsed.children.iter() {
         let child = child.as_element().expect("Ce n'est pas une node ;-;");
@@ -100,22 +105,27 @@ pub fn parsed_to_measure(parsed: &xmltree::Element) -> Mesure {
         if child.name == "note" {
             res.notes.push(parsed_to_note(child))
         }
+        if child.name == "backup" {
+            res.notes.push(parsed_to_backup(child));
+        }
     }
     res
 }
 
 pub fn parsed_to_attributes(parsed: &xmltree::Element) -> Attributes {
-    let clef = Clef {
+    /* let clef = Clef {
         sign: 'a'
-    };
+    }; */
     let time = Time {
         beats: 0,
         beat_type: 0
     };
     let mut res = Attributes {
         divisions: 0,
-        clef: clef,
-        time: time
+        clef: Vec::new(),
+        time: time,
+        staves: None,
+        key: 0
     };
     for child in parsed.children.iter() {
         let child = child.as_element().expect("Ce n'est pas une node ;-;");
@@ -126,7 +136,13 @@ pub fn parsed_to_attributes(parsed: &xmltree::Element) -> Attributes {
             res.time = parsed_to_time(child)
         }
         if child.name == "clef" {
-            res.clef = parsed_to_clef(child)
+            res.clef.push(parsed_to_clef(child))
+        }
+        if child.name == "staves" {
+            res.staves = Some(string_to_u8(child.children[0].as_text().expect("C'est pas un text wesh")));
+        }
+        if child.name == "key" {
+            res.key = string_to_i8(child.children[0].as_element().unwrap().children[0].as_text().expect("C'est pas un text wesh"));
         }
     }
     res
@@ -166,7 +182,10 @@ pub fn parsed_to_note(parsed: &xmltree::Element) -> Note {
     let mut res = Note {
         duration: 0,
         typee: String::new(),
-        pitch: None
+        pitch: None,
+        voice: 1,
+        staff: None,
+        dot: false
     };
     let mut is_silence = false;
     for child in parsed.children.iter() {
@@ -179,6 +198,15 @@ pub fn parsed_to_note(parsed: &xmltree::Element) -> Note {
         }
         if child.name == "rest" {
             is_silence = true;
+        }
+        if child.name == "voice" {
+            res.voice = string_to_u8(child.children[0].as_text().expect("C'est pas un text wesh"));
+        }
+        if child.name == "staff" {
+            res.staff = Some(string_to_u8(child.children[0].as_text().expect("C'est pas un text wesh")));
+        }
+        if child.name == "dot" {
+            res.dot = true;
         }
         if child.name == "pitch" {
             res.pitch = if is_silence {
@@ -194,7 +222,8 @@ pub fn parsed_to_note(parsed: &xmltree::Element) -> Note {
 pub fn parsed_to_pitch(parsed: &xmltree::Element) -> Pitch {
     let mut res = Pitch {
         octave: 0,
-        step: 'a'
+        step: 'a',
+        alter: None
     };
     for child in parsed.children.iter() {
         let child = child.as_element().expect("Ce n'est pas une node ;-;");
@@ -204,10 +233,37 @@ pub fn parsed_to_pitch(parsed: &xmltree::Element) -> Pitch {
         if child.name == "step" {
             res.step = child.children[0].as_text().expect("C'est pas un text wesh").chars().nth(0).expect("string vide");
         }
+        if child.name == "alter" {
+            res.alter = Some(string_to_i8(child.children[0].as_text().expect("C'est pas un text wesh")));
+        }
     }
     res
 }
 
+pub fn parsed_to_backup(parsed: &xmltree::Element) -> Note {
+    let mut res = Note {
+        duration: 0,
+        typee: String::from("backup"),
+        pitch: None,
+        voice: 1,
+        staff: None,
+        dot: false
+    };
+    for child in parsed.children.iter() {
+        let child = child.as_element().expect("Ce n'est pas une node ;-;");
+        if child.name == "duration" {
+            res.duration = string_to_u8(child.children[0].as_text().expect("C'est pas un text wesh"));
+        }
+    };
+    res
+}
+
 fn string_to_u8(s: &str) -> u8 {
-    s.as_bytes()[0] - 48
+    let res : u8 = s.parse().unwrap();
+    res
+}
+
+fn string_to_i8(s: &str) -> i8 {
+    let res : i8 = s.parse().unwrap();
+    res
 }

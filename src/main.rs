@@ -19,21 +19,34 @@ fn build_mesure_attributes(mes: &types::Mesure) -> Element {
             let mut div = Element::new("divisions");
             let mut time = Element::new("time");
             let mut beats = Element::new("beats");
-            let mut beat_type = Element::new("beat_type");
+            let mut beat_type = Element::new("beat-type");
             beats.children.push(XMLNode::Text(a.time.beats.to_string()));
             beat_type
                 .children
                 .push(XMLNode::Text(a.time.beat_type.to_string()));
             time.children.push(XMLNode::Element(beats));
             time.children.push(XMLNode::Element(beat_type));
-            let mut clef = Element::new("clef");
-            let mut sign = Element::new("sign");
-            sign.children.push(XMLNode::Text(a.clef.sign.to_string()));
-            clef.children.push(XMLNode::Element(sign));
             div.children.push(XMLNode::Text(a.divisions.to_string()));
             at.children.push(XMLNode::Element(div));
+            let mut key = Element::new("key");
+            let mut fifth = Element::new("fifths");
+            fifth.children.push(XMLNode::Text(a.key.to_string()));
+            key.children.push(XMLNode::Element(fifth));
+            at.children.push(XMLNode::Element(key));
             at.children.push(XMLNode::Element(time));
-            at.children.push(XMLNode::Element(clef));
+            if let Some(s) = a.staves {
+                let mut staves = Element::new("staves");
+                staves.children.push(XMLNode::Text(s.to_string()));
+                at.children.push(XMLNode::Element(staves));
+            }
+            for cli in 0..a.clef.len() {
+                let mut clef = Element::new("clef");
+                let mut sign = Element::new("sign");
+                sign.children.push(XMLNode::Text(a.clef[cli].sign.to_string()));
+                clef.children.push(XMLNode::Element(sign));
+                clef.attributes.insert(String::from("number"), (cli + 1).to_string());
+                at.children.push(XMLNode::Element(clef));
+            }
             at
         }
     }
@@ -47,6 +60,16 @@ fn build_mesure(mes: &types::Mesure, number: usize, color: String, att: Element)
     );
     mesure.children.push(XMLNode::Element(att));
     for note in mes.notes.iter() {
+        if note.typee == "backup" {
+            let mut n = Element::new("backup");
+            let mut duration = Element::new("duration");
+            duration
+                .children
+                .push(XMLNode::Text(note.duration.to_string()));
+            n.children.push(XMLNode::Element(duration));
+            mesure.children.push(XMLNode::Element(n));
+            continue;
+        }
         let mut n = Element::new("note");
         n.attributes.insert(String::from("color"), color.clone());
         match &note.pitch {
@@ -58,6 +81,11 @@ fn build_mesure(mes: &types::Mesure, number: usize, color: String, att: Element)
                 step.children.push(XMLNode::Text(p.step.to_string()));
                 octave.children.push(XMLNode::Text(p.octave.to_string()));
                 pitch.children.push(XMLNode::Element(step));
+                if let Some(alt) = p.alter {
+                    let mut alter = Element::new("alter");
+                    alter.children.push(XMLNode::Text(alt.to_string()));
+                    pitch.children.push(XMLNode::Element(alter));
+                }
                 pitch.children.push(XMLNode::Element(octave));
                 n.children.push(XMLNode::Element(pitch));
             }
@@ -67,9 +95,21 @@ fn build_mesure(mes: &types::Mesure, number: usize, color: String, att: Element)
             .children
             .push(XMLNode::Text(note.duration.to_string()));
         n.children.push(XMLNode::Element(duration));
+        if note.dot {
+            let dot = Element::new("dot");
+            n.children.push(XMLNode::Element(dot));
+        }
         let mut typee = Element::new("type");
         typee.children.push(XMLNode::Text(note.typee.clone()));
         n.children.push(XMLNode::Element(typee));
+        let mut voice = Element::new("voice");
+        voice.children.push(XMLNode::Text(note.voice.to_string()));
+        n.children.push(XMLNode::Element(voice));
+        if let Some(s) = note.staff {
+            let mut staff = Element::new("staff");
+            staff.children.push(XMLNode::Text(s.to_string()));
+            n.children.push(XMLNode::Element(staff));
+        }
         mesure.children.push(XMLNode::Element(n));
     }
     mesure
@@ -86,7 +126,8 @@ fn build_modified_mesure(number: usize, att: Element, notes: &Vec<diff::Diff>) -
         let mut n = Element::new("note");
         match note {
             diff::Diff::Added(types::Element::note(note)) => {
-                n.attributes.insert(String::from("color"), String::from("#69B32B"));
+                n.attributes
+                    .insert(String::from("color"), String::from("#69B32B"));
                 match &note.pitch {
                     None => n.children.push(XMLNode::Element(Element::new("rest"))),
                     Some(p) => {
@@ -96,6 +137,11 @@ fn build_modified_mesure(number: usize, att: Element, notes: &Vec<diff::Diff>) -
                         step.children.push(XMLNode::Text(p.step.to_string()));
                         octave.children.push(XMLNode::Text(p.octave.to_string()));
                         pitch.children.push(XMLNode::Element(step));
+                        if let Some(alt) = p.alter {
+                            let mut alter = Element::new("alter");
+                            alter.children.push(XMLNode::Text(alt.to_string()));
+                            pitch.children.push(XMLNode::Element(alter));
+                        }
                         pitch.children.push(XMLNode::Element(octave));
                         n.children.push(XMLNode::Element(pitch));
                     }
@@ -105,13 +151,26 @@ fn build_modified_mesure(number: usize, att: Element, notes: &Vec<diff::Diff>) -
                     .children
                     .push(XMLNode::Text(note.duration.to_string()));
                 n.children.push(XMLNode::Element(duration));
+                if note.dot {
+                    let dot = Element::new("dot");
+                    n.children.push(XMLNode::Element(dot));
+                }
                 let mut typee = Element::new("type");
                 typee.children.push(XMLNode::Text(note.typee.clone()));
                 n.children.push(XMLNode::Element(typee));
+                let mut voice = Element::new("voice");
+                voice.children.push(XMLNode::Text(note.voice.to_string()));
+                n.children.push(XMLNode::Element(voice));
+                if let Some(s) = note.staff {
+                    let mut staff = Element::new("staff");
+                    staff.children.push(XMLNode::Text(s.to_string()));
+                    n.children.push(XMLNode::Element(staff));
+                }
                 mesure.children.push(XMLNode::Element(n));
-            },
+            }
             diff::Diff::Removed(types::Element::note(note)) => {
-                n.attributes.insert(String::from("color"), String::from("#F94144"));
+                n.attributes
+                    .insert(String::from("color"), String::from("#F94144"));
                 match &note.pitch {
                     None => n.children.push(XMLNode::Element(Element::new("rest"))),
                     Some(p) => {
@@ -121,6 +180,11 @@ fn build_modified_mesure(number: usize, att: Element, notes: &Vec<diff::Diff>) -
                         step.children.push(XMLNode::Text(p.step.to_string()));
                         octave.children.push(XMLNode::Text(p.octave.to_string()));
                         pitch.children.push(XMLNode::Element(step));
+                        if let Some(alt) = p.alter {
+                            let mut alter = Element::new("alter");
+                            alter.children.push(XMLNode::Text(alt.to_string()));
+                            pitch.children.push(XMLNode::Element(alter));
+                        }
                         pitch.children.push(XMLNode::Element(octave));
                         n.children.push(XMLNode::Element(pitch));
                     }
@@ -130,13 +194,36 @@ fn build_modified_mesure(number: usize, att: Element, notes: &Vec<diff::Diff>) -
                     .children
                     .push(XMLNode::Text(note.duration.to_string()));
                 n.children.push(XMLNode::Element(duration));
+                if note.dot {
+                    let dot = Element::new("dot");
+                    n.children.push(XMLNode::Element(dot));
+                }
                 let mut typee = Element::new("type");
                 typee.children.push(XMLNode::Text(note.typee.clone()));
                 n.children.push(XMLNode::Element(typee));
+                let mut voice = Element::new("voice");
+                voice.children.push(XMLNode::Text(note.voice.to_string()));
+                n.children.push(XMLNode::Element(voice));
+                if let Some(s) = note.staff {
+                    let mut staff = Element::new("staff");
+                    staff.children.push(XMLNode::Text(s.to_string()));
+                    n.children.push(XMLNode::Element(staff));
+                }
                 mesure.children.push(XMLNode::Element(n));
-            },
+            }
             diff::Diff::Unmodified(types::Element::note(note)) => {
-                n.attributes.insert(String::from("color"), String::from("#000000"));
+                if note.typee == "backup" {
+                    let mut b = Element::new("backup");
+                    let mut duration = Element::new("duration");
+                    duration
+                        .children
+                        .push(XMLNode::Text(note.duration.to_string()));
+                    b.children.push(XMLNode::Element(duration));
+                    mesure.children.push(XMLNode::Element(b));
+                    continue;
+                }
+                n.attributes
+                    .insert(String::from("color"), String::from("#000000"));
                 match &note.pitch {
                     None => n.children.push(XMLNode::Element(Element::new("rest"))),
                     Some(p) => {
@@ -146,6 +233,11 @@ fn build_modified_mesure(number: usize, att: Element, notes: &Vec<diff::Diff>) -
                         step.children.push(XMLNode::Text(p.step.to_string()));
                         octave.children.push(XMLNode::Text(p.octave.to_string()));
                         pitch.children.push(XMLNode::Element(step));
+                        if let Some(alt) = p.alter {
+                            let mut alter = Element::new("alter");
+                            alter.children.push(XMLNode::Text(alt.to_string()));
+                            pitch.children.push(XMLNode::Element(alter));
+                        }
                         pitch.children.push(XMLNode::Element(octave));
                         n.children.push(XMLNode::Element(pitch));
                     }
@@ -155,13 +247,26 @@ fn build_modified_mesure(number: usize, att: Element, notes: &Vec<diff::Diff>) -
                     .children
                     .push(XMLNode::Text(note.duration.to_string()));
                 n.children.push(XMLNode::Element(duration));
+                if note.dot {
+                    let dot = Element::new("dot");
+                    n.children.push(XMLNode::Element(dot));
+                }
                 let mut typee = Element::new("type");
                 typee.children.push(XMLNode::Text(note.typee.clone()));
                 n.children.push(XMLNode::Element(typee));
+                let mut voice = Element::new("voice");
+                voice.children.push(XMLNode::Text(note.voice.to_string()));
+                n.children.push(XMLNode::Element(voice));
+                if let Some(s) = note.staff {
+                    let mut staff = Element::new("staff");
+                    staff.children.push(XMLNode::Text(s.to_string()));
+                    n.children.push(XMLNode::Element(staff));
+                }
                 mesure.children.push(XMLNode::Element(n));
-            },
+            }
             diff::Diff::Modified(types::Element::note(note), _) => {
-                n.attributes.insert(String::from("color"), String::from("#F9C74F"));
+                n.attributes
+                    .insert(String::from("color"), String::from("#F9C74F"));
                 match &note.pitch {
                     None => n.children.push(XMLNode::Element(Element::new("rest"))),
                     Some(p) => {
@@ -171,6 +276,11 @@ fn build_modified_mesure(number: usize, att: Element, notes: &Vec<diff::Diff>) -
                         step.children.push(XMLNode::Text(p.step.to_string()));
                         octave.children.push(XMLNode::Text(p.octave.to_string()));
                         pitch.children.push(XMLNode::Element(step));
+                        if let Some(alt) = p.alter {
+                            let mut alter = Element::new("alter");
+                            alter.children.push(XMLNode::Text(alt.to_string()));
+                            pitch.children.push(XMLNode::Element(alter));
+                        }
                         pitch.children.push(XMLNode::Element(octave));
                         n.children.push(XMLNode::Element(pitch));
                     }
@@ -180,11 +290,23 @@ fn build_modified_mesure(number: usize, att: Element, notes: &Vec<diff::Diff>) -
                     .children
                     .push(XMLNode::Text(note.duration.to_string()));
                 n.children.push(XMLNode::Element(duration));
+                if note.dot {
+                    let dot = Element::new("dot");
+                    n.children.push(XMLNode::Element(dot));
+                }
                 let mut typee = Element::new("type");
                 typee.children.push(XMLNode::Text(note.typee.clone()));
                 n.children.push(XMLNode::Element(typee));
+                let mut voice = Element::new("voice");
+                voice.children.push(XMLNode::Text(note.voice.to_string()));
+                n.children.push(XMLNode::Element(voice));
+                if let Some(s) = note.staff {
+                    let mut staff = Element::new("staff");
+                    staff.children.push(XMLNode::Text(s.to_string()));
+                    n.children.push(XMLNode::Element(staff));
+                }
                 mesure.children.push(XMLNode::Element(n));
-            },
+            }
             _ => {}
         }
     }
@@ -196,8 +318,9 @@ fn main() {
     // let mut file2 = File::open("./tests/city_of_tears_d.musicxml").unwrap();
     /* let mut file = File::open("./tests/1Ajout1Modification1RetraitSameMesure_o.musicxml").unwrap();
     let mut file2 = File::open("./tests/1Ajout1Modification1RetraitSameMesure_d.musicxml").unwrap(); */
-    let mut file = File::open("./tests/petit_exemple_o.musicxml").unwrap();
-    let mut file2 = File::open("./tests/petit_exemple_d2.musicxml").unwrap();
+    let mut args = std::env::args();
+    let mut file = File::open(args.nth(1).unwrap()).unwrap();
+    let mut file2 = File::open(args.nth(0).unwrap()).unwrap();
     let mut s = String::new();
 
     file.read_to_string(&mut s).expect("nani?");
@@ -267,7 +390,7 @@ fn main() {
                     let att = build_mesure_attributes(&m);
                     let mes = build_modified_mesure(i, att, &diffs);
                     part.children.push(XMLNode::Element(mes));
-                },
+                }
                 _ => {}
             }
         }
@@ -275,5 +398,7 @@ fn main() {
     }
 
     let output = File::create("./res.musicxml").unwrap();
-    let _ = names_element.write(output).expect("Unable to write the file");
+    let _ = names_element
+        .write(output)
+        .expect("Unable to write the file");
 }
