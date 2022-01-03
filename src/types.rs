@@ -1,7 +1,7 @@
 #[derive(Debug, PartialEq, Clone)]
 pub struct Pitch {
-    step: char,
-    octave: u8,
+    pub step: char,
+    pub octave: u8,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -13,7 +13,7 @@ pub struct Note {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Clef {
-    sign: char,
+    pub sign: char,
 }
 
 #[derive(Debug, Clone)]
@@ -29,14 +29,14 @@ pub struct ScorePartwise {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Attributes {
     pub divisions: u8, //unité de division de la noire le plus petit apparaissant dans la partition entière (1 pour une partition avec que des noires, 2 pour une contenant aussi des croches, etc)
-    clef: Clef,    //Clé de la portée
-    time: Time,
+    pub clef: Clef,    //Clé de la portée
+    pub time: Time,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Time {
-    beats: u8, //nombre du haut dans l'indication de mesure
-    beat_type: u8, //nombre du bas dans l'indication de mesure
+    pub beats: u8, //nombre du haut dans l'indication de mesure
+    pub beat_type: u8, //nombre du bas dans l'indication de mesure
 }
 
 #[derive(Debug, PartialEq, Clone)]
