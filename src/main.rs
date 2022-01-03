@@ -314,10 +314,6 @@ fn build_modified_mesure(number: usize, att: Element, notes: &Vec<diff::Diff>) -
 }
 
 fn main() {
-    // let mut file = File::open("./tests/city_of_tears_o.musicxml").unwrap();
-    // let mut file2 = File::open("./tests/city_of_tears_d.musicxml").unwrap();
-    /* let mut file = File::open("./tests/1Ajout1Modification1RetraitSameMesure_o.musicxml").unwrap();
-    let mut file2 = File::open("./tests/1Ajout1Modification1RetraitSameMesure_d.musicxml").unwrap(); */
     let mut args = std::env::args();
     let mut file = File::open(args.nth(1).unwrap()).unwrap();
     let mut file2 = File::open(args.nth(0).unwrap()).unwrap();
@@ -348,9 +344,7 @@ fn main() {
         }
     }
 
-    // println!("{:#?}", parts2);
     let res = diff::diff(&parts, &parts2);
-    // println!("{:#?}", res);
 
     let clone = names_element.clone();
     for i in 0..clone.children.len() {

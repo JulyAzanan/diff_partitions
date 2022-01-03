@@ -546,11 +546,5 @@ pub fn diff(
             ));
         }
     }
-    // TODO : Calculer le diff sur chacune des parts (portées)
-    // Montre les ajouts par un +, les unmodified par un rien, et les suppressions par un -
-    // Pour les modifications, récup la mesure qui a été ajoutée et celle supprimée juste avant / après, et regarder dedans en profondeur
-    // println!("{:#?}", lcs);
-    // print_diff(src, dst, lcs, i, j, false);
-    // println!("{:#?}", compute_diff_part(&(src.parts[0]), &(dst.parts[0]), lcs, i, j, false));
     return res;
 }
