@@ -12,7 +12,8 @@ pub struct Note {
     pub typee: String,
     pub voice: u8,
     pub staff: Option<u8>,
-    pub dot: bool
+    pub dot: bool,
+    pub is_chord: bool
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -185,7 +186,8 @@ pub fn parsed_to_note(parsed: &xmltree::Element) -> Note {
         pitch: None,
         voice: 1,
         staff: None,
-        dot: false
+        dot: false,
+        is_chord: false
     };
     let mut is_silence = false;
     for child in parsed.children.iter() {
@@ -207,6 +209,9 @@ pub fn parsed_to_note(parsed: &xmltree::Element) -> Note {
         }
         if child.name == "dot" {
             res.dot = true;
+        }
+        if child.name == "chord" {
+            res.is_chord = true;
         }
         if child.name == "pitch" {
             res.pitch = if is_silence {
@@ -247,7 +252,8 @@ pub fn parsed_to_backup(parsed: &xmltree::Element) -> Note {
         pitch: None,
         voice: 1,
         staff: None,
-        dot: false
+        dot: false,
+        is_chord: false
     };
     for child in parsed.children.iter() {
         let child = child.as_element().expect("Ce n'est pas une node ;-;");

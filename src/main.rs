@@ -42,9 +42,11 @@ fn build_mesure_attributes(mes: &types::Mesure) -> Element {
             for cli in 0..a.clef.len() {
                 let mut clef = Element::new("clef");
                 let mut sign = Element::new("sign");
-                sign.children.push(XMLNode::Text(a.clef[cli].sign.to_string()));
+                sign.children
+                    .push(XMLNode::Text(a.clef[cli].sign.to_string()));
                 clef.children.push(XMLNode::Element(sign));
-                clef.attributes.insert(String::from("number"), (cli + 1).to_string());
+                clef.attributes
+                    .insert(String::from("number"), (cli + 1).to_string());
                 at.children.push(XMLNode::Element(clef));
             }
             at
@@ -72,6 +74,9 @@ fn build_mesure(mes: &types::Mesure, number: usize, color: String, att: Element)
         }
         let mut n = Element::new("note");
         n.attributes.insert(String::from("color"), color.clone());
+        if note.is_chord {
+            n.children.push(XMLNode::Element(Element::new("chord")));
+        }
         match &note.pitch {
             None => n.children.push(XMLNode::Element(Element::new("rest"))),
             Some(p) => {
@@ -128,6 +133,9 @@ fn build_modified_mesure(number: usize, att: Element, notes: &Vec<diff::Diff>) -
             diff::Diff::Added(types::Element::note(note)) => {
                 n.attributes
                     .insert(String::from("color"), String::from("#69B32B"));
+                if note.is_chord {
+                    n.children.push(XMLNode::Element(Element::new("chord")));
+                }
                 match &note.pitch {
                     None => n.children.push(XMLNode::Element(Element::new("rest"))),
                     Some(p) => {
@@ -171,6 +179,9 @@ fn build_modified_mesure(number: usize, att: Element, notes: &Vec<diff::Diff>) -
             diff::Diff::Removed(types::Element::note(note)) => {
                 n.attributes
                     .insert(String::from("color"), String::from("#F94144"));
+                if note.is_chord {
+                    n.children.push(XMLNode::Element(Element::new("chord")));
+                }
                 match &note.pitch {
                     None => n.children.push(XMLNode::Element(Element::new("rest"))),
                     Some(p) => {
@@ -224,6 +235,9 @@ fn build_modified_mesure(number: usize, att: Element, notes: &Vec<diff::Diff>) -
                 }
                 n.attributes
                     .insert(String::from("color"), String::from("#000000"));
+                if note.is_chord {
+                    n.children.push(XMLNode::Element(Element::new("chord")));
+                }
                 match &note.pitch {
                     None => n.children.push(XMLNode::Element(Element::new("rest"))),
                     Some(p) => {
@@ -267,6 +281,9 @@ fn build_modified_mesure(number: usize, att: Element, notes: &Vec<diff::Diff>) -
             diff::Diff::Modified(types::Element::note(note), _) => {
                 n.attributes
                     .insert(String::from("color"), String::from("#F9C74F"));
+                if note.is_chord {
+                    n.children.push(XMLNode::Element(Element::new("chord")));
+                }
                 match &note.pitch {
                     None => n.children.push(XMLNode::Element(Element::new("rest"))),
                     Some(p) => {
