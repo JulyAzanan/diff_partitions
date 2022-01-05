@@ -78,6 +78,8 @@ pub fn LCSMeasuresLength(src: &super::types::Part, dst: &super::types::Part) -> 
                             == dst.measures[l - 1].notes[ni].voice)
                         && (src.measures[k - 1].notes[ni].staff
                             == dst.measures[l - 1].notes[ni].staff)
+                        && (src.measures[k - 1].notes[ni].is_chord
+                            == dst.measures[l - 1].notes[ni].is_chord)
                         && (src.measures[k - 1].notes[ni].dot == dst.measures[l - 1].notes[ni].dot)
                         && (src.measures[k - 1].notes[ni].duration as f32 / longestDivisionSrc
                             == dst.measures[l - 1].notes[ni].duration as f32 / longestDivisionDst)
@@ -261,7 +263,15 @@ pub fn compute_diff_part(
                 && (src.measures[(i - 1) as usize].notes[ni].pitch
                     == dst.measures[(j - 1) as usize].notes[ni].pitch)
                 && (src.measures[(i - 1) as usize].notes[ni].typee
-                    == dst.measures[(j - 1) as usize].notes[ni].typee);
+                    == dst.measures[(j - 1) as usize].notes[ni].typee)
+                && (src.measures[(i - 1) as usize].notes[ni].voice
+                    == dst.measures[(j - 1) as usize].notes[ni].voice)
+                && (src.measures[(i - 1) as usize].notes[ni].dot
+                    == dst.measures[(j - 1) as usize].notes[ni].dot)
+                && (src.measures[(i - 1) as usize].notes[ni].is_chord
+                    == dst.measures[(j - 1) as usize].notes[ni].is_chord)
+                && (src.measures[(i - 1) as usize].notes[ni].staff
+                    == dst.measures[(j - 1) as usize].notes[ni].staff);
         }
     }
     if b {
@@ -528,10 +538,10 @@ pub fn diff(
 ) -> Vec<Vec<Diff>> {
     let mut res = Vec::new();
     for k in 0..std::cmp::max(src.parts.len(), dst.parts.len()) {
-        if k > src.parts.len() {
-            res.push(vec![Diff::Added(super::types::Element::part(
-                dst.parts[k].clone(),
-            ))]);
+        if k >= src.parts.len() {
+            let mut p = Vec::new();
+            dst.parts[k].measures.iter().for_each(|x| p.push(Diff::Added(super::types::Element::mesure(x.clone()))));
+            res.push(p);
         } else {
             let lcs = LCSMeasuresLength(&src.parts[k], &dst.parts[k]);
             let i: isize = (lcs.len() as isize) - 1;

@@ -402,7 +402,7 @@ fn main() {
                     let mes = build_modified_mesure(i, att, &diffs);
                     part.children.push(XMLNode::Element(mes));
                 }
-                _ => {}
+                _ => {println!("nani??");}
             }
         }
         names_element.children.push(XMLNode::Element(part));
