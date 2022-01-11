@@ -87,8 +87,11 @@ pub fn LCSMeasuresLength(src: &super::types::Part, dst: &super::types::Part) -> 
                 if b {
                     c[k][l] = c[k - 1][l - 1] + 1
                 }
+                else {
+                    c[k][l] = std::cmp::max(c[k][l - 1], c[k - 1][l]);
+                }
             } else {
-                c[k][l] = std::cmp::max(c[k][l - 1], c[k - 1][l])
+                c[k][l] = std::cmp::max(c[k][l - 1], c[k - 1][l]);
             }
         }
     }
